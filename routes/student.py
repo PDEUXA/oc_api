@@ -1,14 +1,15 @@
 from typing import List
 
-from fastapi import APIRouter, status, HTTPException, Body
+from fastapi import APIRouter, status, HTTPException, Body, Depends
 
 from core.db import db, post_student
+from routes.dependencies import oauth2_scheme, get_me
 from schema.sessions import SessionModel, SessionOutputModel
 from schema.users import UserSimpleModel, UserDetailledModel, UserDetailledModelPlus
 from services.oc_api import get_student_type
 
-router = APIRouter(prefix="/student",
-                   tags=["student"],
+router = APIRouter(prefix="/students",
+                   tags=["students"],
                    responses={404: {"description": "Not found"}})
 
 
@@ -16,7 +17,7 @@ router = APIRouter(prefix="/student",
             response_model=List[UserSimpleModel],
             response_description="Get all students",
             status_code=status.HTTP_200_OK)
-async def get_students() -> UserSimpleModel:
+async def get_students(user: UserDetailledModel = Depends(get_me)) -> UserSimpleModel:
     cursor = db["usersimples"].find()
     students = []
     for document in await cursor.to_list(length=100):
@@ -31,7 +32,8 @@ async def get_students() -> UserSimpleModel:
              response_model=UserDetailledModel,
              response_description="Add a student",
              status_code=status.HTTP_201_CREATED)
-async def add_new_student(student: UserDetailledModel) -> UserDetailledModel:
+async def add_new_student(student: UserDetailledModel,
+                          user: UserDetailledModel = Depends(get_me)) -> UserDetailledModel:
     if result := await post_student(student):
         student_type = get_student_type()
         student_plus = UserDetailledModelPlus(**{**student.dict(),
