@@ -1,23 +1,16 @@
 import re
+from datetime import date
 
 import requests
 
-
-def get_range(r_min, r_max, step=19):
-    output = []
-    complete_range = (r_max - r_min) // step
-    for i in range(complete_range):
-        output.append((i * (step + 1),
-                       (i + 1) * step + 1))
-    if (r_max - r_min) % step != 0:
-        output.append((complete_range * (step + 1), r_max - 1))
-    return output
+from core.db import mongodb
 
 
-def login_oc(mail, pwd):
+async def login_oc(mail, pwd):
     req = requests.get('https://openclassrooms.com/fr/login_ajax')
 
     cookies = {"PHPSESSID": req.cookies['PHPSESSID']}
+    state = req.json()['csrf']
     payload = {"_username": mail,
                '_password': pwd,
                'state': req.json()['csrf']}
@@ -29,22 +22,23 @@ def login_oc(mail, pwd):
     if req.status_code != 200:
         raise RuntimeError(f'{req.content} returned {req.status_code}')
     else:
+        await mongodb.save_cookies({"PHPSESSID": req.cookies['PHPSESSID'], "csrf_token": state})
         return {"state": True, "token": req.cookies['access_token']}
 
 
-def get_token():
-    pass
-
-
-def update_session_api(range_min, range_max, authorization, return_range=False):
+def update_session_api(user_id, range_min, range_max, authorization, return_range=False):
     """
     Find all session in the range
+    :param user_id:
+    :param authorization:
+    :param return_range:
     :param range_min: int
     :param range_max:  int
     :return: list of session, nb of session from parameter  Content Range
     """
     url = 'https://api.openclassrooms.com/users/'
-    suffix = '9490184/sessions?life-cycle-status=canceled,completed,late canceled,marked student as absent'
+    suffix = str(
+        user_id) + '/sessions?actor=expert&life-cycle-status=canceled,completed,late canceled,marked student as absent'
     headers = {'Authorization': authorization,
                'Content-Type': 'application/json',
                'Range': 'items=' + str(range_min) + "-" + str(range_max),
@@ -58,16 +52,33 @@ def update_session_api(range_min, range_max, authorization, return_range=False):
             return req.json()
 
 
-def get_student_type(student_id, session_id):
+def get_student_type(student_id, authorization, cookie):
     rx_student_status = re.compile(r'<div class="mentorshipStudent__details oc-typography-body1"><p>([^<]+)</p>')
 
-    url = 'https://openclassrooms.com/' + 'fr/mentorship/students/' + str(student_id) + '/dashboard'
-
-    req = requests.get(url, cookies={"PHPSESSID": session_id})
+    url = 'https://openclassrooms.com/fr/mentorship/students/' + str(student_id) + '/dashboard'
+    req = requests.get(url, cookies={"PHPSESSID":cookie})
+    # print(req.headers, req.url)
+    # req = req.get()
     if req.status_code != 200:
         raise RuntimeError(f'{req.url} returned {req.status_code}')
 
     html = req.text.replace('\n', '')
     match_status = rx_student_status.search(html)
     if match_status is not None:
-        return {"status": match_status.group(1).strip()}
+        status = {"status": match_status.group(1).strip()}
+    else:
+        status = {"status": "Ext"}
+
+    url = 'https://api.openclassrooms.com/users/'
+    suffix = str(student_id)
+    headers = {'Authorization': authorization,
+               'Content-Type': 'application/json',
+               'Connection': 'keep-alive',
+               'X-Requested-With': 'XMLHttpRequest'}
+    req = requests.get(url + suffix, headers=headers)
+    if req.status_code == 200:
+        return {**req.json(), **status}
+
+
+def schedule_meeting():
+    pass

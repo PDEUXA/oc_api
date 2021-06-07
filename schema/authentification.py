@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
@@ -11,3 +9,5 @@ class Token(BaseModel):
 class UserAuth(BaseModel):
     username: str
     token: str
+    id: int
+    cookie: str

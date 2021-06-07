@@ -1,1 +1,5 @@
 MONGO_URL = "mongodb://localhost:27017"
+MONGO_DB = "OC"
+MONGO_STUDENT_COLL = "students"
+MONGO_SESSION_COLL = "sessions"
+MONGO_INVOICE_COLL = "invoices"

@@ -1,18 +1,16 @@
 import time
-from http.client import HTTPException
 
 import uvicorn
-from fastapi import FastAPI, Depends, Request
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI, Request
 from starlette.middleware.cors import CORSMiddleware
 
-from core.config import *
-from routes import student, session, dependencies
-from services.oc_api import login_oc
+from routes import student, session, dependencies, invoice
 
 app = FastAPI()
 app.include_router(student.router)
 app.include_router(session.router)
+app.include_router(invoice.router)
+
 app.include_router(dependencies.router)
 
 origins = [

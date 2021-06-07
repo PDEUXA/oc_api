@@ -1,17 +1,19 @@
-import pprint
 from typing import List
 
 from fastapi import APIRouter, status, HTTPException, Depends, Request
 
-from core.db import db, post_student, post_session
+from core.utils import get_range
+from crud.session import find_session_by_id, create_session
+from crud.student import get_distinct, create_student, get_student_with_id
 from routes.dependencies import get_me
-from schema.sessions import SessionModel, SessionOutputModel
-from schema.users import UserDetailledModel
-from services.oc_api import update_session_api, get_range
+from schema.authentification import UserAuth
+from schema.sessions import SessionOutputModel, SessionModel, SessionScheduleModel
+from schema.users import UserModel
+from services.oc_api import update_session_api, get_student_type
 
 router = APIRouter(prefix="/session",
                    tags=["session"],
-                   responses={404: {"description": "Not found"}}, dependencies=[Depends(get_me)])
+                   responses={404: {"description": "Not found"}})
 
 
 @router.get("/{id}",
@@ -19,46 +21,52 @@ router = APIRouter(prefix="/session",
             response_description="Get a single session by his id",
             status_code=status.HTTP_200_OK)
 async def get_session_by_id(id: int) -> SessionOutputModel:
-    if session := await db["sessions"].find_one({"id": id}):
+    if session := await find_session_by_id(id=id):
         return session
     else:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
 
-@router.post("/update_sessions",
-             response_model=List[SessionModel],
-             response_description="Add sessions",
+@router.post("/",
+             response_model=SessionScheduleModel,
+             response_description="Scehdule a session with a specified student",
              status_code=status.HTTP_201_CREATED)
-async def fetch_sessions(request: Request) -> List[SessionModel]:
-    sessions, items_range = update_session_api(0, 19, return_range=True,
-                                               authorization=request.headers['Authorization'][7:])
+async def schedule_session(schedule: SessionScheduleModel,
+                           user: UserAuth = Depends(get_me)) -> SessionOutputModel:
+    pass
+
+
+# for request with csrf token
+#
+
+@router.put("/update_sessions",
+            response_model=List[SessionModel],
+            response_description="Add sessions",
+            status_code=status.HTTP_201_CREATED)
+async def fetch_sessions(request: Request, user: UserAuth = Depends(get_me)) -> List[SessionModel]:
+    authorization_header = request.headers['Authorization']
+    sessions, items_range = update_session_api(user_id=user.id,
+                                               range_min=0,
+                                               range_max=19,
+                                               return_range=True,
+                                               authorization=authorization_header)
+    if not sessions:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issue when fetching")
     for r in get_range(0, items_range)[1:]:
-        sessions += update_session_api(*r,authorization=request.headers['Authorization'][7:])
+        sessions += update_session_api(user_id=user.id,
+                                       range_min=r["range_min"],
+                                       range_max=r["range_max"],
+                                       authorization=authorization_header)
     result = []
     for session in sessions:
-        if await post_session(SessionModel(**session)):
+        del session["expert"]
+        session["recipient"] = session["recipient"]["id"]
+        if await create_session(SessionModel(**session)):
             result.append(SessionModel(**session))
+    if students_id := await get_distinct():
+        for student_id in students_id:
+            if not await get_student_with_id(student_id):
+                print(user.cookie)
+                student = UserModel(**get_student_type(student_id, authorization_header, user.cookie))
+                await create_student(student)
     return result
-
-    # sessions, items_range = update_session_api(0, 19, return_range=True, token=request.headers['Authorization'])
-    # print(items_range)
-    # if result := await post_student(student):
-    #     return student
-    # else:
-    #     print('else')
-    #     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Student already exist")
-
-
-@router.get("/projectLevel/{level}",
-            response_model=List[SessionOutputModel],
-            response_description="Get all sessions by level",
-            status_code=status.HTTP_200_OK)
-async def get_sessions_by_level(level: str) -> SessionOutputModel:
-    cursor = db["sessions"].find({"projectLevel": level})
-    sessions = []
-    for document in await cursor.to_list(length=100):
-        sessions.append(document)
-    if sessions:
-        return sessions
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
