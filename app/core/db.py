@@ -1,6 +1,6 @@
 import motor.motor_asyncio
 
-from core.config import MONGO_URL, MONGO_DB, MONGO_STUDENT_COLL, MONGO_SESSION_COLL, MONGO_INVOICE_COLL
+from app.core.config import settings
 
 
 class MongoDB:
@@ -17,23 +17,29 @@ class MongoDB:
             return document
 
     async def save_cookies(self, cookies):
+        """
+        Delete cookies and save the on in parameter in DB
+        :param cookies: dict, cookies to be saved
+        :return:
+        """
         await self.db.cookies.delete_many({})
         await self.db.cookies.insert_one(cookies)
 
     async def get_cookies(self):
+        """
+        Retrieve cookies from DB
+        :return: str
+        """
         cursor = self.db.cookies.find()
         cookies = []
         for document in await cursor.to_list(length=100):
             cookies.append(document)
         if cookies:
             return cookies[0]['PHPSESSID']
-    # async def post_session(self, session: SessionOutputModel):
-    #     if cursor := await self.db["sessions"].find_one({"id": session.id}):
-    #         return False
-    #     else:
-    #         await self.db["sessions"].insert_one(session.dict())
-    #         return True
 
 
-mongodb = MongoDB(MONGO_URL, MONGO_DB, MONGO_STUDENT_COLL,
-                  MONGO_SESSION_COLL, MONGO_INVOICE_COLL)
+mongodb = MongoDB(settings.MONGO_URL,
+                  settings.MONGO_DB,
+                  settings.MONGO_STUDENT_COLL,
+                  settings.MONGO_SESSION_COLL,
+                  settings.MONGO_INVOICE_COLL)

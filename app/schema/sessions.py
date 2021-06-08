@@ -1,8 +1,11 @@
+"""
+Schema for session
+"""
 from datetime import datetime
 from typing import Union
 
 from pydantic import BaseModel
-from schema.users import UserInputModel, UserOutputModel, UserModel
+from app.schema.users import UserInputModel
 
 
 class SessionInputModel(BaseModel):
@@ -40,9 +43,6 @@ class SessionOutputModel(BaseModel):
 
 
 class SessionModel(BaseModel):
-    """
-
-    """
     projectLevel: str
     id: int
     recipient: int

@@ -1,13 +1,9 @@
+"""
+Schema for students/users
+"""
 from typing import Union
 
 from pydantic import BaseModel
-
-
-class UserInputModel(BaseModel):
-    displayableName: str
-    id: int
-    profilePicture: str
-    publicId: str
 
 
 class UserOutputModel(BaseModel):
@@ -15,6 +11,13 @@ class UserOutputModel(BaseModel):
     id: int
     email: str
     status: str
+
+
+class UserInputModel(BaseModel):
+    displayableName: str
+    id: int
+    profilePicture: str
+    publicId: str
 
 
 class UserModel(BaseModel):

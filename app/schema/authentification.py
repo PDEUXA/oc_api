@@ -1,3 +1,6 @@
+"""
+Schema for authentification
+"""
 from pydantic import BaseModel
 
 

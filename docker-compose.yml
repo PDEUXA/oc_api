@@ -1,0 +1,19 @@
+version: "3.3"
+services:
+  app:
+    container_name: app_oc_api
+    build:
+      context: .
+      dockerfile: DockerFile
+    ports:
+        - 3000:3000
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:4.1.1
+    container_name: mongoDB
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongoDB/data/db:/data/db

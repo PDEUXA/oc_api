@@ -1,12 +1,21 @@
+"""
+Services for interacting with api.OC and OC website
+"""
 import re
-from datetime import date
+from typing import Tuple, Union
 
 import requests
 
-from core.db import mongodb
+from app.core.db import mongodb
 
 
-async def login_oc(mail, pwd):
+async def login_oc(mail, pwd) -> dict:
+    """
+    Log to OC website to get token and cookies
+    :param mail: str
+    :param pwd: str
+    :return: dict
+    """
     req = requests.get('https://openclassrooms.com/fr/login_ajax')
 
     cookies = {"PHPSESSID": req.cookies['PHPSESSID']}
@@ -21,12 +30,12 @@ async def login_oc(mail, pwd):
                         data=payload)
     if req.status_code != 200:
         raise RuntimeError(f'{req.content} returned {req.status_code}')
-    else:
-        await mongodb.save_cookies({"PHPSESSID": req.cookies['PHPSESSID'], "csrf_token": state})
-        return {"state": True, "token": req.cookies['access_token']}
+    await mongodb.save_cookies({"PHPSESSID": req.cookies['PHPSESSID'], "csrf_token": state})
+    return {"state": True, "token": req.cookies['access_token']}
 
 
-def update_session_api(user_id, range_min, range_max, authorization, return_range=False):
+def update_session_api(user_id, range_min, range_max,
+                       authorization, return_range=False) -> Union[dict, Tuple]:
     """
     Find all session in the range
     :param user_id:
@@ -38,7 +47,8 @@ def update_session_api(user_id, range_min, range_max, authorization, return_rang
     """
     url = 'https://api.openclassrooms.com/users/'
     suffix = str(
-        user_id) + '/sessions?actor=expert&life-cycle-status=canceled,completed,late canceled,marked student as absent'
+        user_id) + '/sessions?actor=expert&life-cycle-status=canceled,' \
+                   'completed,late canceled,marked student as absent'
     headers = {'Authorization': authorization,
                'Content-Type': 'application/json',
                'Range': 'items=' + str(range_min) + "-" + str(range_max),
@@ -48,17 +58,21 @@ def update_session_api(user_id, range_min, range_max, authorization, return_rang
     if req.status_code == 206:
         if return_range:
             return req.json(), int(req.headers['Content-Range'].split('/')[-1])
-        else:
-            return req.json()
+        return req.json()
 
 
-def get_student_type(student_id, authorization, cookie):
+def get_student_type(student_id, authorization, cookie) -> dict:
+    """
+    Get student type
+    :param student_id: int
+    :param authorization: str to interact with api oc
+    :param cookie: str to interact with oc website
+    :return: dict
+    """
     rx_student_status = re.compile(r'<div class="mentorshipStudent__details oc-typography-body1"><p>([^<]+)</p>')
 
     url = 'https://openclassrooms.com/fr/mentorship/students/' + str(student_id) + '/dashboard'
-    req = requests.get(url, cookies={"PHPSESSID":cookie})
-    # print(req.headers, req.url)
-    # req = req.get()
+    req = requests.get(url, cookies={"PHPSESSID": cookie})
     if req.status_code != 200:
         raise RuntimeError(f'{req.url} returned {req.status_code}')
 
