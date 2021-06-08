@@ -48,3 +48,8 @@ Only session which are not in DB will be stored.
 On the endpoint "/invoice/" (POST), add the year (4 digits) and the month (2 digits).
 From the sessions of the DB it will aggregate required ones, to generate an invoice.
 
+
+
+# Upcomming features
+- Schedule a session with a student
+- Write report
