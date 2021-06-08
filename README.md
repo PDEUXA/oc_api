@@ -4,9 +4,10 @@ API for OpenClassRooms mentoring:
 - Save students to mongoDB
 - Manage and generate Invoices from mongoDB aggregation
 
-Swagger accessible by:
+Swagger accessible on:
 http://localhost:3000/docs
 
+<img src="img/swagger.PNG"/>
 
 # Quick Start
 ## Run from your computer
