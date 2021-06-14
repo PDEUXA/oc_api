@@ -7,7 +7,7 @@ chardet==4.0.0
 click==8.0.1
 colorama==0.4.4
 cryptography==3.4.7
-fastapi==0.65.1
+fastapi==0.65.2
 h11==0.12.0
 idna==2.10
 isort==5.8.0
@@ -23,12 +23,12 @@ pyOpenSSL==20.0.1
 PySocks==1.7.1
 python-multipart==0.0.5
 requests==2.25.1
-setuptools==52.0.0
+setuptools==52.0.0.post20210125
 six==1.15.0
 starlette==0.14.2
 toml==0.10.2
 typing-extensions==3.10.0.0
-urllib3==1.26.4
+urllib3==1.26.5
 uvicorn==0.14.0
 wheel==0.36.2
 win-inet-pton==1.1.0

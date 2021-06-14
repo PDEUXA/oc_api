@@ -26,15 +26,30 @@ async def create_student(student: UserModel, mongo: MongoDB = mongodb):
         return student
 
 
-async def get_student_all_sessions(id: int,
+async def get_student_all_sessions(id: int, include_status: str = "", exclude_status: str = "",
                                    mongo: MongoDB = mongodb) -> Union[List[SessionOutputModel], None]:
     """
     Get all sessions from an student from DB
+    :param exclude_status: List[str], session status
+    :param include_status: List[str], session status
     :param mongo: MongoDB
     :param id: id of the student (int)
     :return: List of SessionOutputModel or None if student has no session
     """
-    cursor = mongo.session_coll.find({"recipient": id})
+    exclude_status = exclude_status.split(",")
+    print(include_status)
+
+    if include_status:
+        include_status = include_status.split(",")
+        print(include_status)
+
+        cursor = mongo.session_coll.find(
+            {"recipient": id,
+             '$and': [
+                 {"status": {'$in': include_status}},
+                 {"status": {'$nin': exclude_status}}]})
+    else:
+        cursor = mongo.session_coll.find({"recipient": id, "status": {'$nin': exclude_status}})
     sessions = []
     for document in await cursor.to_list(length=100):
         sessions.append(document)

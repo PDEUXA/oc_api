@@ -100,18 +100,22 @@ async def get_student_by_id(id: int) -> UserOutputModel:
             response_model=List[SessionOutputModel],
             response_description="Session List from student",
             status_code=status.HTTP_200_OK)
-async def get_student_sessions(id: int) -> List[SessionOutputModel]:
+async def get_student_sessions(id: int, include_status: str = "", exclude_status: str = "") -> List[SessionOutputModel]:
     """
     Get all sessions from the student according to its id:
     - **id** : integer representing the student id.
+    - **include_status** : filter by status (session)
+    - **exclude_status**: status to be excluded
     \f
+    :param exclude_status: str
+    :param include_status: str
     :param id: int
     :return: List[SessionOutputModel]
     """
-    sessions = await get_student_all_sessions(id=id)
+    sessions = await get_student_all_sessions(id=id, include_status=include_status, exclude_status=exclude_status)
     if sessions:
         return sessions
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sessions not found")
 
 
 @router.post("/{id}/schedule",
