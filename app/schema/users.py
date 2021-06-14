@@ -1,7 +1,7 @@
 """
 Schema for students/users
 """
-from typing import Union
+from typing import Union, Optional
 
 from pydantic import BaseModel
 
@@ -23,14 +23,14 @@ class UserInputModel(BaseModel):
 class UserModel(BaseModel):
     displayName: str
     email: str
-    enrollment: str
+    enrollment: Optional[str] = ""
     firstName: str
     id: int
-    identityLocked: bool
-    language: str
+    identityLocked: Optional[bool] = False
+    language: Optional[str]
     lastName: str
-    openClassroomsProfileUrl: str
-    organization: Union[str, None]
-    premium: bool
-    profilePicture: str
+    openClassroomsProfileUrl: Optional[str] = ""
+    organization: Optional[Union[str, None]] = ""
+    premium: Optional[bool] = False
+    profilePicture: Optional[str] = ""
     status: str

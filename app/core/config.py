@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     SERVER_PORT: Optional[int] = 3000
     DEV: Optional[bool] = False
 
-    MONGO_URL: Optional[str] = "mongodb://mongoDB:27017"
+    MONGO_URL: Optional[str] = "mongodb://localhost:27017"
     MONGO_DB: Optional[str] = "OC"
     MONGO_STUDENT_COLL: Optional[str] = "students"
     MONGO_SESSION_COLL: Optional[str] = "sessions"

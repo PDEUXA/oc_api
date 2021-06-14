@@ -14,12 +14,12 @@ from app.schema.sessions import SessionOutputModel
 from app.schema.users import UserModel, UserOutputModel
 
 
-async def create_student(student: UserModel, mongo: MongoDB = mongodb):
+async def create_student(student: UserModel, mongo: MongoDB = mongodb) -> Union[UserModel, None]:
     """
 
     :param mongo:
     :param student: Student UserModel
-    :return: True for new student, false if student exist
+    :return: UserModel
     """
     if not await mongo.student_coll.find_one({"id": student.id}):
         await mongo.student_coll.insert_one(student.dict())
@@ -37,12 +37,8 @@ async def get_student_all_sessions(id: int, include_status: str = "", exclude_st
     :return: List of SessionOutputModel or None if student has no session
     """
     exclude_status = exclude_status.split(",")
-    print(include_status)
-
     if include_status:
         include_status = include_status.split(",")
-        print(include_status)
-
         cursor = mongo.session_coll.find(
             {"recipient": id,
              '$and': [
@@ -52,7 +48,7 @@ async def get_student_all_sessions(id: int, include_status: str = "", exclude_st
         cursor = mongo.session_coll.find({"recipient": id, "status": {'$nin': exclude_status}})
     sessions = []
     for document in await cursor.to_list(length=100):
-        sessions.append(document)
+        sessions.append(SessionOutputModel(**document))
     if sessions:
         return sessions
 
@@ -66,7 +62,7 @@ async def fetch_all_students(mongo: MongoDB = mongodb) -> Union[List[UserOutputM
     cursor = mongo.student_coll.find()
     students = []
     for document in await cursor.to_list(length=100):
-        students.append(document)
+        students.append(UserOutputModel(**document))
     if students:
         return students
 
@@ -79,7 +75,7 @@ async def find_student_with_id(id: int, mongo: MongoDB = mongodb) -> Union[UserO
     :return: UserOutputModel or None if student does not exist
     """
     if student := await mongo.student_coll.find_one({"id": id}):
-        return student
+        return UserOutputModel(**student)
 
 
 async def get_distinct(mongo: MongoDB = mongodb) -> Union[List[int], None]:
@@ -90,3 +86,14 @@ async def get_distinct(mongo: MongoDB = mongodb) -> Union[List[int], None]:
     """
     if students_id := await mongo.session_coll.distinct("recipient"):
         return students_id
+
+
+async def delete_student(id: int, mongo: MongoDB = mongodb) -> Union[int, None]:
+    """
+    Delete a student in the DB with the corresponding id
+    :param id: str
+    :param mongo: MongoDB
+    :return: Number of session deleted
+    """
+    session = await mongo.student_coll.delete_one({"id": id})
+    return session.deleted_count

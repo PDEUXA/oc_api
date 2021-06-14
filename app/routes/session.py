@@ -49,7 +49,6 @@ async def get_session_by_id(id: int) -> SessionOutputModel:
         return session
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
-
 @router.post("/",
              response_model=Union[SessionModel, None],
              response_description="Session sceduled with student.",

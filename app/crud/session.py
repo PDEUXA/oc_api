@@ -70,7 +70,7 @@ async def create_session(session: SessionModel, mongo: MongoDB = mongodb) -> Uni
 
 async def delete_session(id: int, mongo: MongoDB = mongodb):
     """
-    Delete asession in the DB with the corresponding id
+    Delete a session in the DB with the corresponding id
     :param id: str
     :param mongo: MongoDB
     :return: Number of session deleted
