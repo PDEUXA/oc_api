@@ -2,7 +2,7 @@
 Schema for session
 """
 from datetime import datetime
-from typing import Union
+from typing import Union, Optional
 
 from pydantic import BaseModel
 from app.schema.users import UserInputModel
@@ -23,14 +23,21 @@ class SessionInputModel(BaseModel):
     videoConference: Union[None, str]
 
 
-class SessionScheduleModel(BaseModel):
-    id: int
-    day: int
-    month: int
-    year: int
-    hour: int
-    minute: int
-    csrf_token: str
+class SessionScheduleInModel(BaseModel):
+    studentId: int
+    sessionDate: datetime
+
+
+class SessionScheduleRequestModel(BaseModel):
+    studentId: int
+    mentorId: int
+    sessionDate: datetime
+    isDefense: Optional[bool] = False
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
 
 
 class SessionOutputModel(BaseModel):

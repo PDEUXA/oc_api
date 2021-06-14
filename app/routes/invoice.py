@@ -26,12 +26,14 @@ router = APIRouter(prefix="/invoices",
 
 @router.post("/",
              response_model=InvoiceModel,
-             response_description="Create an Invoice",
+             response_description="Invoice Created",
              status_code=status.HTTP_201_CREATED)
 async def add_new_invoice(year: str, month: str) -> InvoiceModel:
     """
     Post a new Invoice (created from year and month param)
-        HTTP 409 if the invoice exists
+    - **year**: string representing the year in format YYYY
+    - **month** : string representing the month in format MM
+    \f
     :param year: str
     :param month: str
     :return:
@@ -44,12 +46,12 @@ async def add_new_invoice(year: str, month: str) -> InvoiceModel:
 
 @router.get("/",
             response_model=List[InvoiceModel],
-            response_description="Get all invoices",
+            response_description="Invoices list",
             status_code=status.HTTP_200_OK)
 async def get_all_invoice() -> List[InvoiceModel]:
     """
     Get all invoices from DB
-        HTTP 404 if there is no invoices
+    \f
     :return: list of InvoiceModel
     """
     invoices = await find_all_invoices()
@@ -60,12 +62,13 @@ async def get_all_invoice() -> List[InvoiceModel]:
 
 @router.get("/{id}",
             response_model=InvoiceModel,
-            response_description="Get an Invoice",
+            response_description="Invoice found",
             status_code=status.HTTP_200_OK)
 async def get_invoice(id: str) -> InvoiceModel:
     """
-    Get the invoice according to its id
-        HTTP 404 if the invoice does not exist
+    Get the invoice according to its id:
+    - **id**: string representing the invoice id.
+    \f
     :param id: str
     :return: Invoice Model
     """
@@ -76,13 +79,13 @@ async def get_invoice(id: str) -> InvoiceModel:
 
 
 @router.delete("/{id}",
-               # response_model=InvoiceModel,
-               response_description="Delete an Invoice",
+               response_description="Invoice Deleted",
                status_code=status.HTTP_200_OK)
 async def remove_invoice(id: str) -> InvoiceModel:
     """
     Delete the invoice according to its id
-        HTTP 404 if the invoice does not exist
+    - **id**: string representing the invoice id.
+    \f
     :param id: str
     :return: InvoiceModel
     """
@@ -94,12 +97,13 @@ async def remove_invoice(id: str) -> InvoiceModel:
 
 @router.put("/{id}",
             response_model=InvoiceModel,
-            response_description="Refresh an Invoice with new session",
+            response_description="Refreshed invoice",
             status_code=status.HTTP_201_CREATED)
 async def refresh_invoice(id: str) -> InvoiceModel:
     """
     Refresh the invoice with the sessions
-        HTTP 404 if the invoice does not exist
+    - **id**: string representing the invoice id.
+    \f
     :param id: str
     :return: InvoiceModel
     """

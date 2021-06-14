@@ -43,6 +43,11 @@ async def get_me(token: str = Depends(oauth2_scheme), cookie: str = Depends(mong
 async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict:
     """
     Login for Oauth2
+    - **grant_type**	string
+    - **username** required	string
+    - **password** required	string
+    - **scope**	string
+    \f
     :param form_data:  OAuth2PasswordRequestForm
     :return: dict with token and token type
     """

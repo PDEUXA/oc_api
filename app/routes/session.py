@@ -12,18 +12,21 @@ API routes relating to the invoices:
     DELETE -> remove_invoice
     PUT -> refresh_invoice
 """
-from typing import List
+from datetime import datetime
+from typing import List, Union
 
 from fastapi import APIRouter, status, HTTPException, Depends, Request
 
 from app.core.utils import get_range
-from app.crud.session import find_session_by_id, create_session
+from app.crud.session import find_session_by_id, create_session, find_session_by_date, delete_session, \
+    find_sessions_by_date
 from app.crud.student import get_distinct, find_student_with_id, create_student
 from app.routes.dependencies import get_me
 from app.schema.authentification import UserAuth
-from app.schema.sessions import SessionOutputModel, SessionScheduleModel, SessionModel
+from app.schema.sessions import SessionOutputModel, SessionModel, SessionScheduleInModel, SessionScheduleRequestModel
 from app.schema.users import UserModel
-from app.services.oc_api import update_session_api, get_student_type
+from app.services.oc_api import update_session_api, get_student_type, schedule_meeting, find_specific_session, \
+    delete_session_oc
 
 router = APIRouter(prefix="/session",
                    tags=["session"],
@@ -32,12 +35,13 @@ router = APIRouter(prefix="/session",
 
 @router.get("/{id}",
             response_model=SessionOutputModel,
-            response_description="Get a single session by his id",
+            response_description="Session found",
             status_code=status.HTTP_200_OK)
 async def get_session_by_id(id: int) -> SessionOutputModel:
     """
-     Get the session according to its id
-         HTTP 404 if the invoice does not exist
+     Get the session according to its id:
+     - **id**: integer representing the session id.
+    \f
      :param id: int
      :return: SessionOutputModel
      """
@@ -47,31 +51,101 @@ async def get_session_by_id(id: int) -> SessionOutputModel:
 
 
 @router.post("/",
-             response_model=SessionScheduleModel,
-             response_description="Scehdule a session with a specified student",
+             response_model=Union[SessionModel, None],
+             response_description="Session sceduled with student.",
              status_code=status.HTTP_201_CREATED)
-async def schedule_session(schedule: SessionScheduleModel,
+async def schedule_session(schedule: SessionScheduleInModel,
                            user: UserAuth = Depends(get_me)) -> SessionOutputModel:
-    pass
-
-
-# for request with csrf token
-#
-
-@router.put("/update_sessions",
-            response_model=List[SessionModel],
-            response_description="Add sessions",
-            status_code=status.HTTP_201_CREATED)
-async def fetch_sessions(request: Request, user: UserAuth = Depends(get_me)) -> List[SessionModel]:
     """
-    Fetch session from OC
-        HTTP 404 issue when fetching
+    Schedule a session
+    - **schedule** : SessionScheduleInModel
+        - **studentId**: integer representing the student id.
+        - **sessionDate**: date in ISO format/
+    \f
+    :param schedule: SessionScheduleInModel
+    :param user: request
+    :return:
+    """
+    # Check if session at the same date exist
+    if sessions := await find_session_by_date(date=schedule.sessionDate, duration=60):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A session exist at the same date")
 
-    :param request: UserAuth
+    new_session = SessionScheduleRequestModel(**{"studentId": schedule.studentId,
+                                                 "mentorId": user.id,
+                                                 "sessionDate": schedule.sessionDate})
+    session_saved = schedule_meeting(new_session, user.cookie)
+    if session_saved is not None:
+        if session_saved.status_code != 201:
+            raise HTTPException(status_code=session_saved.status_code, detail=session_saved.json())
+        # find session in OC
+        session = find_specific_session(user.id, user.token, "pending", after=schedule.sessionDate)
+        if session:
+            session = session[0]
+            del session["expert"]
+            session["recipient"] = session["recipient"]["id"]
+            if await create_session(SessionModel(**session)):
+                return session
+
+
+@router.delete("/{id}",
+               # response_model=SessionModel,
+               response_description="Session Deleted",
+               status_code=status.HTTP_200_OK)
+async def remove_session(id: int,
+                         user: UserAuth = Depends(get_me)):
+    """
+    Remove session from DB on OC according to its id
+    - **id**: integer representing the session id.
+    \f
+    :param id: int
+    :param user:
+    :return:
+    """
+    if session := await delete_session(id):
+        delete_session_oc(id, user.cookie)
+    else:
+        print("session not in db")
+        delete_session_oc(id, user.cookie)
+    return {"Session " + str(id) + " deleted"}
+
+
+@router.delete("/",
+               response_model=List[SessionModel],
+               response_description="Sessions Deleted",
+               status_code=status.HTTP_200_OK)
+async def remove_sessions(sessionDate: datetime,
+                          user: UserAuth = Depends(get_me)):
+    """
+    Remove sessions from DB and OC after requested date:
+    - **sessionDate** : date with ISO format
+    \f
+    :param sessionDate: date in format Y-m-dTHH:MM:SSZ
     :param user: Request
     :return: List[SessionModel]
     """
-    authorization_header = request.headers['Authorization']
+    if sessions := await find_sessions_by_date(sessionDate):
+        deleted = []
+        for session in sessions:
+            if delete_session_oc(session["id"], user.cookie):
+                await delete_session(session["id"])
+                deleted.append(session)
+        return deleted
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No session found")
+
+
+@router.put("/update_sessions",
+            response_model=List[SessionModel],
+            response_description="Sessions fetched",
+            status_code=status.HTTP_201_CREATED)
+async def fetch_sessions(user: UserAuth = Depends(get_me)) -> List[SessionModel]:
+    """
+    Fetch session from OC
+    \f
+    :param user: Request
+    :return: List[SessionModel]
+    """
+    authorization_header = user.token
     sessions, items_range = update_session_api(user_id=user.id,
                                                range_min=0,
                                                range_max=19,
@@ -93,7 +167,6 @@ async def fetch_sessions(request: Request, user: UserAuth = Depends(get_me)) -> 
     if students_id := await get_distinct():
         for student_id in students_id:
             if not await find_student_with_id(student_id):
-                print(user.cookie)
                 student = UserModel(**get_student_type(student_id, authorization_header, user.cookie))
                 await create_student(student)
     return result

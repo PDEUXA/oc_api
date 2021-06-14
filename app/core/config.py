@@ -6,7 +6,7 @@ from pydantic import BaseSettings
 class Settings(BaseSettings):
     PROJECT_NAME: Optional[str] = "OC_API_MENTOR"
     SERVER_PORT: Optional[int] = 3000
-    DEV: Optional[bool] = True
+    DEV: Optional[bool] = False
 
     MONGO_URL: Optional[str] = "mongodb://mongoDB:27017"
     MONGO_DB: Optional[str] = "OC"
