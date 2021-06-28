@@ -152,7 +152,7 @@ async def fetch_sessions(user: UserAuth = Depends(get_me)) -> List[SessionModel]
                                                authorization=authorization_header)
     if not sessions:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Issue when fetching")
-    for range_ in get_range(0, items_range)[1:]:
+    for range_ in get_range(0, items_range)[1:-1]:
         sessions += update_session_api(user_id=user.id,
                                        range_min=range_["range_min"],
                                        range_max=range_["range_max"],
