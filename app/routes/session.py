@@ -15,6 +15,7 @@ API routes relating to the invoices:
 from datetime import datetime
 from typing import List, Union
 
+import pydantic
 from fastapi import APIRouter, status, HTTPException, Depends, Request
 
 from app.core.utils import get_range
@@ -48,6 +49,7 @@ async def get_session_by_id(id: int) -> SessionOutputModel:
     if session := await find_session_by_id(id=id):
         return session
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+
 
 @router.post("/",
              response_model=Union[SessionModel, None],
@@ -161,8 +163,11 @@ async def fetch_sessions(user: UserAuth = Depends(get_me)) -> List[SessionModel]
     for session in sessions:
         del session["expert"]
         session["recipient"] = session["recipient"]["id"]
-        if await create_session(SessionModel(**session)):
-            result.append(SessionModel(**session))
+        try:
+            if await create_session(SessionModel(**session)):
+                result.append(SessionModel(**session))
+        except pydantic.error_wrappers.ValidationError:
+            pass
     if students_id := await get_distinct():
         for student_id in students_id:
             if not await find_student_with_id(student_id):
