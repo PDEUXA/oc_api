@@ -44,6 +44,30 @@ async def add_new_invoice(year: str, month: str) -> InvoiceModel:
     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Invoice already exist")
 
 
+@router.post("/batch",
+             response_model=List[InvoiceModel],
+             response_description="Invoice Created",
+             status_code=status.HTTP_201_CREATED)
+async def create_batch_invoices() -> List[InvoiceModel]:
+    """
+    Post a new Invoice (created from year and month param)
+    \f
+    :return:
+    """
+    invoices = []
+    for i in range(1, 13):
+        if i < 10:
+            month = "0" + str(i)
+        else:
+            month = str(i)
+        invoice = await add_invoice("2021" + "-" + month)
+        if invoice:
+            invoices.append(invoice)
+    if invoices:
+        return invoices
+    raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Invoice already exist")
+
+
 @router.get("/",
             response_model=List[InvoiceModel],
             response_description="Invoices list",

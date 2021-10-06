@@ -56,6 +56,7 @@ async def find_session_by_id(id: int, mongo: MongoDB = mongodb) -> Union[Session
         return session
 
 
+
 async def create_session(session: SessionModel, mongo: MongoDB = mongodb) -> Union[SessionModel, None]:
     """
     Create a sessions from a SessionModel
@@ -63,9 +64,12 @@ async def create_session(session: SessionModel, mongo: MongoDB = mongodb) -> Uni
     :param mongo: MongoDB
     :return: SessionModel or None if session already exist
     """
-    if not await mongo.session_coll.find_one({"id": session.id}):
+    if not await mongo.session_coll.find_one({"id": session.id}) :
         await mongo.session_coll.insert_one(session.dict())
-        return session
+    else:
+        print('update')
+        await mongo.session_coll.update_one({"id": session.id}, {'$set': {'status': session.status}})
+    return session
 
 
 async def delete_session(id: int, mongo: MongoDB = mongodb):

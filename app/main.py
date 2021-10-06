@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from starlette.middleware.cors import CORSMiddleware
 
-from app.routes import dependencies, invoice,session, student
+from app.routes import dependencies, invoice, session, student, utils
 from app.core.config import settings
 
 app = FastAPI(title=settings.PROJECT_NAME)
@@ -14,6 +14,7 @@ app.include_router(student.router)
 app.include_router(session.router)
 app.include_router(invoice.router)
 app.include_router(dependencies.router)
+app.include_router(utils.router)
 
 # INCLUDES DEV DEPENDCIES
 if settings.DEV:

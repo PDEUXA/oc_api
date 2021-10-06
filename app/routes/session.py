@@ -28,6 +28,7 @@ from app.schema.sessions import SessionOutputModel, SessionModel, SessionSchedul
 from app.schema.users import UserModel
 from app.services.oc_api import update_session_api, get_student_type, schedule_meeting, find_specific_session, \
     delete_session_oc
+from app.services.utils import schedule_session_wrapper
 
 router = APIRouter(prefix="/session",
                    tags=["session"],
@@ -67,25 +68,27 @@ async def schedule_session(schedule: SessionScheduleInModel,
     :param user: request
     :return:
     """
-    # Check if session at the same date exist
-    if sessions := await find_session_by_date(date=schedule.sessionDate, duration=60):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A session exist at the same date")
+    session = await schedule_session_wrapper(schedule.studentId,user, schedule.sessionDate)
+    return session
 
-    new_session = SessionScheduleRequestModel(**{"studentId": schedule.studentId,
-                                                 "mentorId": user.id,
-                                                 "sessionDate": schedule.sessionDate})
-    session_saved = schedule_meeting(new_session, user.cookie)
-    if session_saved is not None:
-        if session_saved.status_code != 201:
-            raise HTTPException(status_code=session_saved.status_code, detail=session_saved.json())
-        # find session in OC
-        session = find_specific_session(user.id, user.token, "pending", after=schedule.sessionDate)
-        if session:
-            session = session[0]
-            del session["expert"]
-            session["recipient"] = session["recipient"]["id"]
-            if await create_session(SessionModel(**session)):
-                return session
+    # if sessions := await find_session_by_date(date=schedule.sessionDate, duration=60):
+    #     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A session exist at the same date")
+    #
+    # new_session = SessionScheduleRequestModel(**{"studentId": schedule.studentId,
+    #                                              "mentorId": user.id,
+    #                                              "sessionDate": schedule.sessionDate})
+    # session_saved = schedule_meeting(new_session, user.cookie)
+    # if session_saved is not None:
+    #     if session_saved.status_code != 201:
+    #         raise HTTPException(status_code=session_saved.status_code, detail=session_saved.json())
+    #     # find session in OC
+    #     session = find_specific_session(user.id, user.token, "pending", after=schedule.sessionDate)
+    #     if session:
+    #         session = session[0]
+    #         del session["expert"]
+    #         session["recipient"] = session["recipient"]["id"]
+    #         if await create_session(SessionModel(**session)):
+    #             return session
 
 
 @router.delete("/{id}",

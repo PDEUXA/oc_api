@@ -7,7 +7,8 @@ API routes relating to the invoices:
 
 /update_session
     PUT -> fetch_sessions
-
+/{email}
+    GET -> get_student_by_email
 /{id}
     GET -> get_student_by_id
 /{id}/sessions
@@ -21,7 +22,8 @@ from typing import List
 from fastapi import APIRouter, status, HTTPException, Depends
 
 from app.crud.session import find_session_by_date, create_session
-from app.crud.student import fetch_all_students, create_student, find_student_with_id, get_student_all_sessions
+from app.crud.student import fetch_all_students, create_student, find_student_with_id, get_student_all_sessions, \
+    find_student_with_email
 from app.routes.dependencies import get_me
 from app.schema.authentification import UserAuth
 from app.schema.sessions import SessionOutputModel, SessionScheduleInModel, SessionScheduleRequestModel, SessionModel
@@ -78,6 +80,21 @@ async def add_new_student(student: UserModel) -> UserModel:
         return student
     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Student already exist")
 
+@router.get("/{email}",
+            response_model=UserOutputModel,
+            response_description="Student found",
+            status_code=status.HTTP_200_OK)
+async def get_student_by_email(email: str) -> UserOutputModel:
+    """
+    Get the student according to its email
+    - **email** : integer representing the student email.
+    \f
+    :param email: str
+    :return: UserOutputModel
+    """
+    if student := await find_student_with_email(email=email):
+        return student
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
 
 @router.get("/{id}",
             response_model=UserOutputModel,

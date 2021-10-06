@@ -4,6 +4,7 @@ CRUD operation on DB for interacting with sessions:
 - create_student
 - fetch_all_students
 - find_student_with_id
+- find_student_with_email
 - get_distinct
 """
 
@@ -65,6 +66,17 @@ async def fetch_all_students(mongo: MongoDB = mongodb) -> Union[List[UserOutputM
         students.append(UserOutputModel(**document))
     if students:
         return students
+
+
+async def find_student_with_email(email: str, mongo: MongoDB = mongodb) -> Union[UserOutputModel, None]:
+    """
+    Fetch a student by its email
+    :param email: str
+    :param mongo: MongoDB
+    :return: UserOutputModel or None if student does not exist
+    """
+    if session := await mongo.student_coll.find_one({"email": email}):
+        return session
 
 
 async def find_student_with_id(id: int, mongo: MongoDB = mongodb) -> Union[UserOutputModel, None]:
