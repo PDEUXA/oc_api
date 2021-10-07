@@ -13,7 +13,7 @@ services:
       - mongodb
 
   mongodb:
-    image: mongo:latest
+    image: mongo:bionic
     container_name: mongoDB
     env_file:
       - api-env.env

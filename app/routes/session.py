@@ -173,7 +173,8 @@ async def fetch_sessions(user: UserAuth = Depends(get_me)) -> List[SessionModel]
             pass
     if students_id := await get_distinct():
         for student_id in students_id:
-            if not await find_student_with_id(student_id):
+            student = await find_student_with_id(student_id)
+            if not student.id:
                 student = UserModel(**get_student_type(student_id, authorization_header, user.cookie))
                 await create_student(student)
     return result
