@@ -1,0 +1,25 @@
+li {
+  list-style: none;
+  margin-top: 0.5rem;
+}
+
+header {
+  h1 {
+    font-size: 2rem;
+  }
+
+}
+
+aside {
+  & h1 {
+    font-size: 4rem;
+  }
+}
+
+table {
+  border: 1px solid black;
+
+  tr {
+    border: 1px solid black;
+  }
+}

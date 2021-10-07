@@ -8,6 +8,16 @@ from app.schema.sessions import SessionScheduleRequestModel, SessionModel
 from app.services.oc_api import schedule_meeting, find_specific_session
 
 
+
+
+
+
+
+
+
+
+
+
 async def schedule_session_wrapper(studentId, user, eventStart):
     # Check if session at the same date exist
     new_session = SessionScheduleRequestModel(**{"studentId": studentId,
@@ -30,3 +40,4 @@ async def schedule_session_wrapper(studentId, user, eventStart):
             if await create_session(SessionModel(**session)):
                 return session
         raise HTTPException(status_code=session_oc.status_code, detail="Session not in OC")
+

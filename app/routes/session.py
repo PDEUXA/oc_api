@@ -16,18 +16,17 @@ from datetime import datetime
 from typing import List, Union
 
 import pydantic
-from fastapi import APIRouter, status, HTTPException, Depends, Request
+from fastapi import APIRouter, status, HTTPException, Depends
 
 from app.core.utils import get_range
-from app.crud.session import find_session_by_id, create_session, find_session_by_date, delete_session, \
+from app.crud.session import find_session_by_id, create_session, delete_session, \
     find_sessions_by_date
 from app.crud.student import get_distinct, find_student_with_id, create_student
 from app.routes.dependencies import get_me
 from app.schema.authentification import UserAuth
-from app.schema.sessions import SessionOutputModel, SessionModel, SessionScheduleInModel, SessionScheduleRequestModel
+from app.schema.sessions import SessionModel, SessionScheduleInModel, SessionOutModel
 from app.schema.users import UserModel
-from app.services.oc_api import update_session_api, get_student_type, schedule_meeting, find_specific_session, \
-    delete_session_oc
+from app.services.oc_api import update_session_api, get_student_type, delete_session_oc
 from app.services.utils import schedule_session_wrapper
 
 router = APIRouter(prefix="/session",
@@ -36,10 +35,10 @@ router = APIRouter(prefix="/session",
 
 
 @router.get("/{id}",
-            response_model=SessionOutputModel,
+            response_model=SessionOutModel,
             response_description="Session found",
             status_code=status.HTTP_200_OK)
-async def get_session_by_id(id: int) -> SessionOutputModel:
+async def get_session_by_id(id: int) -> SessionOutModel:
     """
      Get the session according to its id:
      - **id**: integer representing the session id.
@@ -47,7 +46,8 @@ async def get_session_by_id(id: int) -> SessionOutputModel:
      :param id: int
      :return: SessionOutputModel
      """
-    if session := await find_session_by_id(id=id):
+    session = await find_session_by_id(id=id)
+    if session.id:
         return session
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
@@ -57,7 +57,7 @@ async def get_session_by_id(id: int) -> SessionOutputModel:
              response_description="Session sceduled with student.",
              status_code=status.HTTP_201_CREATED)
 async def schedule_session(schedule: SessionScheduleInModel,
-                           user: UserAuth = Depends(get_me)) -> SessionOutputModel:
+                           user: UserAuth = Depends(get_me)) -> SessionOutModel:
     """
     Schedule a session
     - **schedule** : SessionScheduleInModel
@@ -68,7 +68,7 @@ async def schedule_session(schedule: SessionScheduleInModel,
     :param user: request
     :return:
     """
-    session = await schedule_session_wrapper(schedule.studentId,user, schedule.sessionDate)
+    session = await schedule_session_wrapper(schedule.studentId, user, schedule.sessionDate)
     return session
 
     # if sessions := await find_session_by_date(date=schedule.sessionDate, duration=60):
@@ -92,11 +92,11 @@ async def schedule_session(schedule: SessionScheduleInModel,
 
 
 @router.delete("/{id}",
-               # response_model=SessionModel,
+               response_model=set,
                response_description="Session Deleted",
                status_code=status.HTTP_200_OK)
 async def remove_session(id: int,
-                         user: UserAuth = Depends(get_me)):
+                         user: UserAuth = Depends(get_me)) -> set:
     """
     Remove session from DB on OC according to its id
     - **id**: integer representing the session id.
@@ -114,7 +114,7 @@ async def remove_session(id: int,
 
 
 @router.delete("/",
-               response_model=List[SessionModel],
+               response_model=List[SessionOutModel],
                response_description="Sessions Deleted",
                status_code=status.HTTP_200_OK)
 async def remove_sessions(sessionDate: datetime,
@@ -125,13 +125,13 @@ async def remove_sessions(sessionDate: datetime,
     \f
     :param sessionDate: date in format Y-m-dTHH:MM:SSZ
     :param user: Request
-    :return: List[SessionModel]
+    :return: List[SessionOutModel]
     """
     if sessions := await find_sessions_by_date(sessionDate):
         deleted = []
         for session in sessions:
-            if delete_session_oc(session["id"], user.cookie):
-                await delete_session(session["id"])
+            if delete_session_oc(session.id, user.cookie):
+                await delete_session(session.id)
                 deleted.append(session)
         return deleted
     else:

@@ -12,7 +12,7 @@ from starlette import status
 from app.core.db import mongodb
 from app.crud.student import find_student_with_email
 from app.routes.dependencies import get_me
-from app.schema.sessions import SessionOutputModel
+from app.schema.sessions import SessionOutModel
 from app.schema.utils import CalendlyWebHook
 from app.services.utils import schedule_session_wrapper
 
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/webhook",
              response_model=None,
              response_description="Webhook Calendly Session",
              status_code=status.HTTP_200_OK)
-async def post_session_event(event: dict) -> SessionOutputModel:
+async def post_session_event(event: dict) -> SessionOutModel:
     """
     Receive event from webhook, parseIt, then schedule
     \f
