@@ -100,7 +100,6 @@ async def find_student_with_id(id: int, mongo: MongoDB = mongodb) -> UserOutMode
         return UserOutModel()
 
 
-
 async def get_distinct(mongo: MongoDB = mongodb) -> List[int]:
     """
     Get all unique students from the sessions in DB
