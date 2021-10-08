@@ -12,6 +12,11 @@ class SessionScheduleInModel(BaseModel):
     studentId: int
     sessionDate: datetime
 
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+
 
 class SessionScheduleRequestModel(BaseModel):
     studentId: int
