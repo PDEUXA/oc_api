@@ -14,7 +14,7 @@ class SessionScheduleInModel(BaseModel):
 
     class Config:
         json_encoders = {
-            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S%z"),
         }
 
 
@@ -26,7 +26,7 @@ class SessionScheduleRequestModel(BaseModel):
 
     class Config:
         json_encoders = {
-            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S%z"),
         }
 
 
@@ -40,7 +40,7 @@ class SessionOutModel(BaseModel):
 
     class Config:
         json_encoders = {
-            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S%z"),
         }
 
 
