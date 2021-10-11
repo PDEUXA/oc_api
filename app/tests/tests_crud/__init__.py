@@ -5,15 +5,11 @@ from app.schema.users import UserModel
 
 class MockedDoc:
     settings = Settings()
-    settings.MONGO_STUDENT_COLL = "test_students"
-    settings.MONGO_SESSION_COLL = "test_sessions"
-    settings.MONGO_INVOICE_COLL = "test_invoices"
     mongodb_test = MongoDB(settings.MONGO_URL,
                            settings.MONGO_DB,
-                           settings.MONGO_STUDENT_COLL,
-                           settings.MONGO_SESSION_COLL,
-                           settings.MONGO_INVOICE_COLL)
-
+                           "test_students",
+                           "test_sessions",
+                           "test_invoices")
     multiple_student = [UserModel(**{"displayName": "testPostDisplayName",
                                      "email": "testPost@gmail.com",
                                      "enrollment": "",
@@ -47,7 +43,7 @@ class MockedDoc:
             "projectLevel": "3",
             "id": 9999,
             "recipient": 7777,
-            "sessionDate": "2021-05-11T11:00:00.000",
+            "sessionDate": "2021-05-11T11:00:00Z",
             "lifeCycleStatus": "late canceled test",
             "status": "late canceled",
             "type": "mentoring",
@@ -57,7 +53,7 @@ class MockedDoc:
             "projectLevel": "3",
             "id": 9997,
             "recipient": 7777,
-            "sessionDate": "2021-05-11T11:00:00.000",
+            "sessionDate": "2021-05-11T11:00:00Z",
             "lifeCycleStatus": "completed",
             "status": "completed",
             "type": "mentoring",

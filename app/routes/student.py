@@ -7,7 +7,8 @@ API routes relating to the invoices:
 
 /update_session
     PUT -> fetch_sessions
-
+/{email}
+    GET -> get_student_by_email
 /{id}
     GET -> get_student_by_id
 /{id}/sessions
@@ -21,11 +22,12 @@ from typing import List
 from fastapi import APIRouter, status, HTTPException, Depends
 
 from app.crud.session import find_session_by_date, create_session
-from app.crud.student import fetch_all_students, create_student, find_student_with_id, get_student_all_sessions
+from app.crud.student import fetch_all_students, create_student, find_student_with_id, get_student_all_sessions, \
+    find_student_with_email
 from app.routes.dependencies import get_me
 from app.schema.authentification import UserAuth
-from app.schema.sessions import SessionOutputModel, SessionScheduleInModel, SessionScheduleRequestModel, SessionModel
-from app.schema.users import UserOutputModel, UserModel
+from app.schema.sessions import SessionOutModel, SessionScheduleInModel, SessionScheduleRequestModel, SessionModel
+from app.schema.users import UserOutModel, UserModel
 from app.services.oc_api import schedule_meeting, find_specific_session
 
 router = APIRouter(prefix="/students",
@@ -34,10 +36,10 @@ router = APIRouter(prefix="/students",
 
 
 @router.get("/",
-            response_model=List[UserOutputModel],
+            response_model=List[UserOutModel],
             response_description="Students list",
             status_code=status.HTTP_200_OK)
-async def get_all_students() -> List[UserOutputModel]:
+async def get_all_students() -> List[UserOutModel]:
     """
     Get all students from db
     \f
@@ -79,11 +81,29 @@ async def add_new_student(student: UserModel) -> UserModel:
     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Student already exist")
 
 
-@router.get("/{id}",
-            response_model=UserOutputModel,
+@router.get("/{email}",
+            response_model=UserOutModel,
             response_description="Student found",
             status_code=status.HTTP_200_OK)
-async def get_student_by_id(id: int) -> UserOutputModel:
+async def get_student_by_email(email: str) -> UserOutModel:
+    """
+    Get the student according to its email
+    - **email** : integer representing the student email.
+    \f
+    :param email: str
+    :return: UserOutputModel
+    """
+    student = await find_student_with_email(email=email)
+    if student.id:
+        return student
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
+
+
+@router.get("/{id}",
+            response_model=UserOutModel,
+            response_description="Student found",
+            status_code=status.HTTP_200_OK)
+async def get_student_by_id(id: int) -> UserOutModel:
     """
     Get the student according to its ID
     - **id** : integer representing the student id.
@@ -91,16 +111,18 @@ async def get_student_by_id(id: int) -> UserOutputModel:
     :param id: int
     :return: UserOutputModel
     """
-    if student := await find_student_with_id(id=id):
+    print(id)
+    student = await find_student_with_id(id=id)
+    if student.id:
         return student
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Student not found")
 
 
 @router.get("/{id}/sessions",
-            response_model=List[SessionOutputModel],
+            response_model=List[SessionOutModel],
             response_description="Session List from student",
             status_code=status.HTTP_200_OK)
-async def get_student_sessions(id: int, include_status: str = "", exclude_status: str = "") -> List[SessionOutputModel]:
+async def get_student_sessions(id: int, include_status: str = "", exclude_status: str = "") -> List[SessionOutModel]:
     """
     Get all sessions from the student according to its id:
     - **id** : integer representing the student id.

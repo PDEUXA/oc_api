@@ -4,6 +4,13 @@ Schema for invoice
 from typing import List, Optional
 
 from pydantic import BaseModel
+from pydantic.types import Enum
+
+
+class StatusEnum(str, Enum):
+    draft = 'Draft'
+    sent = 'Sent'
+    payed = 'Payed'
 
 
 class InvoiceInModel(BaseModel):
@@ -21,9 +28,28 @@ class InvoiceItem(BaseModel):
     price: Optional[float] = 0
 
 
+class FileInvoice(BaseModel):
+    file: bytes = None
+    filename: str = None
+
+
+class FileInvoiceOut(BaseModel):
+    filename: str = None
+
+
 class InvoiceModel(BaseModel):
     date: str
-    status: Optional[str] = "Draft"
+    status: Optional[StatusEnum] = "Draft"
     id: str
     total: Optional[float] = 0
     item: List[InvoiceItem]
+    file: Optional[FileInvoice] = None
+
+
+class InvoiceOutModel(BaseModel):
+    date: str = ""
+    status: Optional[StatusEnum] = "Draft"
+    id: str = ""
+    total: Optional[float] = 0
+    item: List[InvoiceItem] = []
+    file: Optional[FileInvoiceOut] = None

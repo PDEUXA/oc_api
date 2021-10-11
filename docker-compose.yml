@@ -5,15 +5,20 @@ services:
     build:
       context: .
       dockerfile: DockerFile
+    env_file:
+      - api-env.env
     ports:
         - 3000:3000
     depends_on:
       - mongodb
 
   mongodb:
-    image: mongo:latest
+    image: mongo:bionic
     container_name: mongoDB
+    env_file:
+      - api-env.env
     ports:
       - 27017:27017
     volumes:
       - ./mongoDB/data/db:/data/db
+    command: mongod --auth

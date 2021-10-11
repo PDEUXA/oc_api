@@ -37,6 +37,18 @@ class MongoDB:
         if cookies:
             return cookies[0]['PHPSESSID']
 
+    async def get_token(self):
+        """
+        Retrieve token from DB
+        :return: str
+        """
+        cursor = self.db.cookies.find()
+        cookies = []
+        for document in await cursor.to_list(length=100):
+            cookies.append(document)
+        if cookies:
+            return cookies[0]['access_token']
+
 
 mongodb = MongoDB(settings.MONGO_URL,
                   settings.MONGO_DB,

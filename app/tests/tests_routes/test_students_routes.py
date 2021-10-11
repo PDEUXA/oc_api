@@ -27,7 +27,7 @@ def test_add_new_student():
         "email": "testPost@gmail.com",
         "enrollment": "",
         "firstName": "testPostFirstName",
-        "id": 7778,
+        "id": 77787,
         "identityLocked": False,
         "language": "",
         "lastName": "testlastName",

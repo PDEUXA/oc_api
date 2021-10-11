@@ -6,6 +6,8 @@ from datetime import timedelta
 from typing import Tuple, Union
 
 import requests
+from fastapi import HTTPException
+from starlette import status
 
 from app.core.db import mongodb
 from app.schema.sessions import SessionScheduleInModel, SessionScheduleRequestModel
@@ -31,7 +33,7 @@ async def login_oc(mail, pwd) -> dict:
                         cookies=cookies,
                         data=payload)
     if req.status_code != 200:
-        raise RuntimeError(f'{req.content} returned {req.status_code}')
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(req.content))
     await mongodb.save_cookies({"PHPSESSID": req.cookies['PHPSESSID'], "access_token": req.cookies['access_token']})
     return {"state": True, "token": req.cookies['access_token']}
 

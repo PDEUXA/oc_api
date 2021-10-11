@@ -5,27 +5,17 @@ from datetime import datetime
 from typing import Union, Optional
 
 from pydantic import BaseModel
-from app.schema.users import UserInputModel
-
-
-class SessionInputModel(BaseModel):
-    """
-
-    """
-    projectLevel: str
-    expert: UserInputModel
-    id: int
-    recipient: UserInputModel
-    sessionDate: datetime
-    lifeCycleStatus: str
-    status: str
-    type: str
-    videoConference: Union[None, str]
+from app.schema.users import UserInModel
 
 
 class SessionScheduleInModel(BaseModel):
     studentId: int
     sessionDate: datetime
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        }
 
 
 class SessionScheduleRequestModel(BaseModel):
@@ -36,25 +26,33 @@ class SessionScheduleRequestModel(BaseModel):
 
     class Config:
         json_encoders = {
-            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S%z"),
         }
 
 
-class SessionOutputModel(BaseModel):
-    projectLevel: str
-    sessionDate: datetime
-    status: str
-    type: str
-    id: int
-    recipient: int
+class SessionOutModel(BaseModel):
+    projectLevel: str = ""
+    sessionDate: datetime = ""
+    status: str = ""
+    type: str = ""
+    id: int = None
+    recipient: int = ""
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        }
 
 
-class SessionModel(BaseModel):
-    projectLevel: str
-    id: int
-    recipient: int
-    sessionDate: datetime
+class SessionInputModel(SessionOutModel):
+    """
+
+    """
+    expert: UserInModel
     lifeCycleStatus: str
-    status: str
-    type: str
     videoConference: Union[None, str]
+
+
+class SessionModel(SessionOutModel):
+    lifeCycleStatus: str = ""
+    videoConference: Union[None, str] = ""
