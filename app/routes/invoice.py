@@ -227,8 +227,8 @@ async def get_html_invoice(id: str, request: Request) -> HTMLResponse:
     invoice = await find_invoice_by_id(id)
     if invoice.id:
         return HTMLResponse(templates.TemplateResponse("invoice.html",
-                                          {"request": request, "invoice": invoice.dict(),
-                                           "date": datetime.today().date().strftime('%d/%m/%Y')}))
+                                                       {"request": request, "invoice": invoice.dict(),
+                                                        "date": datetime.today().date().strftime('%d/%m/%Y')}).body)
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invoice not found")
 
 

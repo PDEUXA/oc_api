@@ -15,7 +15,7 @@ from typing import List
 from app.core.config import settings
 from app.core.db import mongodb, MongoDB
 from app.core.utils import generate_forfait, define_price
-from app.schema.invoice import InvoiceItem, FileInvoice, InvoiceOutModel
+from app.schema.invoice import InvoiceItem, FileInvoice, InvoiceOutModel, InvoiceModel
 
 
 async def find_invoice_by_date(date: str, mongo: MongoDB = mongodb) -> InvoiceOutModel:
@@ -31,7 +31,7 @@ async def find_invoice_by_date(date: str, mongo: MongoDB = mongodb) -> InvoiceOu
         return InvoiceOutModel()
 
 
-async def find_invoice_by_id(id: str, mongo: MongoDB = mongodb) -> InvoiceOutModel:
+async def find_invoice_by_id(id: str, mongo: MongoDB = mongodb) -> InvoiceModel:
     """
     Fetch an invoice from the DB with corresponding id
     :param id:  str
@@ -39,9 +39,9 @@ async def find_invoice_by_id(id: str, mongo: MongoDB = mongodb) -> InvoiceOutMod
     :return: If invoice in DB return InvoiceModel else None
     """
     if invoice := await mongo.invoice_coll.find_one({"id": id}):
-        return InvoiceOutModel(**invoice)
+        return InvoiceModel(**invoice)
     else:
-        return InvoiceOutModel()
+        return InvoiceModel()
 
 
 async def find_all_invoices(mongo: MongoDB = mongodb) -> List[InvoiceOutModel]:
@@ -205,7 +205,7 @@ async def update_status_invoice(id: str, status: str, mongo: MongoDB = mongodb) 
         return InvoiceOutModel()
 
 
-async def update_pdf_invoice(id: str, file: FileInvoice, mongo: MongoDB = mongodb) -> InvoiceOutModel:
+async def update_pdf_invoice(id: str, file: FileInvoice, mongo: MongoDB = mongodb) -> InvoiceModel:
     """
     Update the pdf of the invoice
     :param id: str
@@ -215,10 +215,10 @@ async def update_pdf_invoice(id: str, file: FileInvoice, mongo: MongoDB = mongod
     """
     if invoice := await find_invoice_by_id(id):
         await mongo.invoice_coll.update_one({"id": invoice.id}, {'$set': {'file': file.dict()}})
-        invoice.filename = file.filename
+        invoice.file.filename = file.filename
         return invoice
     else:
-        return InvoiceOutModel()
+        return InvoiceModel()
 
 
 async def update_full_invoice(id: str) -> InvoiceOutModel:
@@ -241,6 +241,7 @@ async def add_invoice(date: str) -> InvoiceOutModel:
     :param date: str
     :return: InvoiceModel or None if already present in DB
     """
-    if invoice := await find_invoice_by_date(date):
+    invoice = await find_invoice_by_date(date)
+    if invoice.id:
         return invoice
     return await create_invoice(date)

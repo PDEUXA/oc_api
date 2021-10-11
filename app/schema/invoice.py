@@ -38,12 +38,12 @@ class FileInvoiceOut(BaseModel):
 
 
 class InvoiceModel(BaseModel):
-    date: str
+    date: str = ""
     status: Optional[StatusEnum] = "Draft"
-    id: str
+    id: str = ""
     total: Optional[float] = 0
-    item: List[InvoiceItem]
-    file: Optional[FileInvoice] = None
+    item: Optional[List[InvoiceItem]] = []
+    file: Optional[FileInvoice] = FileInvoice()
 
 
 class InvoiceOutModel(BaseModel):
@@ -52,4 +52,4 @@ class InvoiceOutModel(BaseModel):
     id: str = ""
     total: Optional[float] = 0
     item: List[InvoiceItem] = []
-    file: Optional[FileInvoiceOut] = None
+    file: Optional[FileInvoiceOut] = FileInvoiceOut()
